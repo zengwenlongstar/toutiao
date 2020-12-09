@@ -4,11 +4,11 @@ import router from './router'
 import store from './store'
 import './style/index.less'
 import './style/icon.less'
-import vant from 'vant'
+import Vant from 'vant'
 import 'vant/lib/index.css'
-
+import 'amfe-flexible'
 Vue.config.productionTip = false
-Vue.use(vant)
+Vue.use(Vant)
 new Vue({
   router,
   store,
