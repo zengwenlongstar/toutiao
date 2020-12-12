@@ -112,7 +112,6 @@ export default {
     async loadUserInfo () {
       try {
         const { data } = await getUserInfo()
-
         this.userInfo = data.data
         console.log(this.userInfo)
       } catch (err) {
