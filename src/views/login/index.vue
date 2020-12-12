@@ -1,7 +1,9 @@
 <template>
   <div class="login-container">
     <!-- 登录模块 -->
-    <van-nav-bar class="page-nav-bar " title="登录" />
+    <van-nav-bar class="page-nav-bar " title="登录">
+      <van-icon @click="$router.push('/')" slot="left" name="cross" />
+    </van-nav-bar>
     <!-- 表单模块 -->
     <van-form @submit="onSubmit" ref="loginFrom">
       <van-field
@@ -55,12 +57,12 @@
 <script>
 import { login, sendSms } from '@/api/user'
 export default {
-  name: 'loginIndex',
+  name: 'LoginIndex',
   data () {
     return {
       user: {
-        model: '',
-        code: ''
+        mobile: '13911111113',
+        code: '246810'
       },
       userFormRules: {
         mobile: [
@@ -89,17 +91,17 @@ export default {
   },
   methods: {
     async onSubmit () {
-      const user = this.user
       this.$toast.loading({
         message: '登录中...',
         forbidClick: true, // 禁用背景点击
         duration: 0 // 持续时间，默认 2000，0 表示持续展示不关闭
       })
       try {
-        const { data } = await login(user)
+        const { data } = await login(this.user)
         console.log(data)
         this.$store.commit('setUser', data.data)
         this.$toast.success('登录成功')
+        this.$router.back()
       } catch (err) {
         if (err.response.status === 400) {
           this.$toast.fail('验证码错误')
@@ -147,5 +149,8 @@ export default {
 }
 .login-btn-wrap {
   padding: 53px 33px;
+}
+.van-icon {
+  color: #fff;
 }
 </style>
