@@ -1,6 +1,7 @@
 <template>
   <div class="login-container">
-    <van-tabbar class="lay-out">
+    <router-view></router-view>
+    <van-tabbar class="lay-out" route>
       <van-tabbar-item to="/">
         <i slot="icon" class="toutiao toutiao-shouye"></i>
         <span class="text">首页</span></van-tabbar-item
@@ -18,7 +19,6 @@
         <span class="text">{{ $store.state.user ? '我的' : '未登录' }}</span>
       </van-tabbar-item>
     </van-tabbar>
-    <router-view></router-view>
   </div>
 </template>
 

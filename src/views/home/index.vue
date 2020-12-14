@@ -1,7 +1,7 @@
 <template>
   <div class="home-container">
-    <!-- 搜索模块 -->
-    <van-nav-bar class="page-nav-bar">
+    <!-- 导航栏 -->
+    <van-nav-bar class="page-nav-bar" fixed>
       <van-button
         class="search-btn"
         slot="title"
@@ -9,25 +9,35 @@
         size="small"
         round
         icon="search"
-      >
-        搜索</van-button
+        >搜索</van-button
       >
     </van-nav-bar>
-
-    <!-- tab栏切换 -->
+    <!-- 频道列表 -->
     <van-tabs class="channel-tabs" v-model="active" animated swipeable>
       <van-tab
-        :title="channel.name"
         v-for="channel in channels"
         :key="channel.id"
+        :title="channel.name"
       >
-        <article-list :channel="channel" />
+        <article-list :channel="channel"></article-list>
       </van-tab>
-      <div slot="nav-right" class="palec"></div>
-      <div slot="nav-right" class="hamburger-btn">
-        <i class="toutiao toutiao-gengduo"></i>
+      <div slot="nav-right" class="placeholder"></div>
+      <div
+        slot="nav-right"
+        class="hamburger-btn"
+        @click="isChennelEditShow = true"
+      >
+        <i class="icon toutiao toutiao-gengduo"></i>
       </div>
     </van-tabs>
+    <!-- 弹出层 -->
+    <van-popup
+      v-model="isChennelEditShow"
+      closeable
+      position="bottom"
+      close-icon-position="top-left"
+      :style="{ height: '80%' }"
+    />
   </div>
 </template>
 
@@ -42,7 +52,8 @@ export default {
   data () {
     return {
       active: 0,
-      channels: ''
+      channels: [],
+      isChennelEditShow: false
     }
   },
   created () {
@@ -52,8 +63,8 @@ export default {
     async loadChannels () {
       try {
         const { data } = await getUserChannels()
-        console.log(data)
         this.channels = data.data.channels
+        console.log(data)
       } catch (err) {
         this.$toast('获取频道数据失败')
       }
@@ -63,13 +74,15 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.van-icon {
-  color: #fff !important;
+i.toutiao {
+  font-size: 34px !important;
 }
-
+// 当前组件中加了 scoped 对内部样式的修改需要加 /deep/，或者去掉 scoped
 .home-container {
-  /deep/.van-nav-bar__title {
-    max-width: unset !important;
+  padding-top: 174px;
+  padding-bottom: 100px;
+  /deep/ .van-nav-bar__title {
+    max-width: unset;
   }
   .search-btn {
     width: 555px;
@@ -81,57 +94,63 @@ export default {
       font-size: 32px;
     }
   }
-}
-/deep/ .channel-tabs {
-  .van-tabs-wrap {
-    height: 82px;
-  }
-  /deep/.van-tab {
-    min-width: 200px;
-    border-right: 1px solid #edeff3;
-    font-size: 30px;
-  }
-  /deep/.van-tab-active {
-    color: #333 !important;
-  }
-  .van-tabs__nav {
-    padding-bottom: 0;
-  }
-  .van-tabs__line {
-    bottom: 8px;
-    width: 31px !important;
-    height: 6px;
-    background-color: #3296fa;
-  }
-  .hamburger-btn {
-    position: fixed;
-    right: 0;
-    width: 66px;
-    height: 82px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #fff;
-    opacity: 0.9;
-    i.toutiao {
-      font-size: 33px;
-      color: #000 !important;
-    }
-    &::before {
-      content: '';
-      position: absolute;
+  /deep/ .channel-tabs {
+    .van-tabs__wrap {
+      position: fixed;
+      top: 92px;
+      z-index: 1;
       left: 0;
-      width: 1px;
-      height: 100px;
-      color: #000;
-      background-image: url(~@/assets/gradient-gray-line.png);
-      background-size: contain;
+      right: 0;
+      height: 82px;
     }
-  }
-  .palec {
-    flex-shrink: 0;
-    width: 66px;
-    height: 82px;
+    // Tab 标签页
+    .van-tab {
+      border-right: 1px solid #edeff3;
+      min-width: 200px;
+      font-size: 30px;
+      color: #777777;
+    }
+    .van-tab--active {
+      color: #333333;
+    }
+    .van-tabs__nav {
+      padding-bottom: 0;
+    }
+    .van-tabs__line {
+      bottom: 8px;
+      width: 31px !important;
+      height: 6px;
+      background-color: #3296fa;
+    }
+    // 汉堡
+    .placeholder {
+      flex-shrink: 0;
+      width: 66px;
+      height: 82px;
+    }
+    .hamburger-btn {
+      position: fixed;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 66px;
+      height: 82px;
+      background-color: #fff;
+      background-color: rgba(255, 255, 255, 0.902);
+      i.iconfont {
+        font-size: 33px;
+      }
+      &:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        width: 1px;
+        height: 58px;
+        background-image: url(~@/assets/gradient-gray-line.png);
+        background-size: contain;
+      }
+    }
   }
 }
 </style>
