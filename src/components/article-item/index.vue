@@ -1,6 +1,8 @@
 <template>
   <van-cell class="article-item">
-    <div slot="title" class="title">{{ article.title }}</div>
+    <div slot="title" class="title van-multi-ellipsis--l2">
+      {{ article.title }}
+    </div>
     <div slot="label">
       <div v-if="article.cover.type === 3" class="cover-wrap">
         <div
@@ -25,6 +27,7 @@
       v-if="article.cover.type === 1"
       slot="default"
       class="right-cover"
+      fit="cover"
       :src="article.cover.images[0]"
     ></van-image>
   </van-cell>

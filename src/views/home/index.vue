@@ -36,18 +36,26 @@
       closeable
       position="bottom"
       close-icon-position="top-left"
-      :style="{ height: '80%' }"
-    />
+      :style="{ height: '100%' }"
+    >
+      <channel-edit
+        :my-channels="channels"
+        :active="active"
+        @updata-active="onUpdataActive"
+      ></channel-edit>
+    </van-popup>
   </div>
 </template>
 
 <script>
 import { getUserChannels } from '@/api/user'
 import ArticleList from './components/article-list'
+import ChannelEdit from './components/channel'
 export default {
   name: 'HomeIndex',
   components: {
-    ArticleList
+    ArticleList,
+    ChannelEdit
   },
   data () {
     return {
@@ -68,6 +76,10 @@ export default {
       } catch (err) {
         this.$toast('获取频道数据失败')
       }
+    },
+    onUpdataActive (index, isChennelEditShow = true) {
+      this.active = index
+      this.isChennelEditShow = isChennelEditShow
     }
   }
 }
