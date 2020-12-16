@@ -16,17 +16,17 @@
     <van-grid :gutter="10" class="my-grid">
       <van-grid-item
         class="grid-item"
-        v-for="(channels, index) in myChannels"
+        v-for="(channel, index) in myChannels"
         :key="index"
-        @click="onMyChannelClick(channels, index)"
+        @click="onMyChannelClick(channel, index)"
       >
         <van-icon
-          v-show="isEdit && !fixdChlnne.includes(channels.id)"
+          v-show="isEdit && !fixdChlnne.includes(channel.id)"
           slot="icon"
           name="clear"
         ></van-icon>
         <div :class="{ active: index === active }" slot="text" class="text">
-          {{ channels.name }}
+          {{ channel.name }}
         </div>
       </van-grid-item>
     </van-grid>
@@ -49,7 +49,10 @@
 </template>
 
 <script>
-import { getAllChannels } from '@/api/channels'
+import { getAllChannels, addUserChannel, deleteUserChannel } from '@/api/channels'
+
+import { mapState } from 'vuex'
+import { setItem } from '@/utils/storage'
 export default {
   name: 'ChannelEdit',
   components: {},
@@ -72,6 +75,7 @@ export default {
   },
   computed: {
     // 计算属性会观测内部依赖数据的变化
+    ...mapState(['user']),
     recommendChannels () {
       const channels = []
       this.allChannels.forEach(channel => {
@@ -103,8 +107,21 @@ export default {
         console.log('失败')
       }
     },
-    onAddchannel (channel) {
+    async onAddchannel (channel) {
       this.myChannels.push(channel)
+      console.log(this.user)
+      if (this.user) {
+        try {
+          await addUserChannel({
+            id: channel.id,
+            seq: this.myChannels.length
+          })
+        } catch (err) {
+          this.$toast('保存失败，请稍后重试')
+        }
+      } else {
+        setItem('TOUTIAO_CHANNELS', this.myChannels)
+      }
     },
     onMyChannelClick (channels, index) {
       if (this.isEdit) {
@@ -115,8 +132,20 @@ export default {
           this.$emit('updata-active', this.active - 1)
         }
         this.myChannels.splice(index, 1)
+        this.deleteChannel(channels)
       } else {
         this.$emit('updata-active', index, false)
+      }
+    },
+    async deleteChannel (channel) {
+      try {
+        if (this.user) {
+          await deleteUserChannel(channel.id)
+        } else {
+          setItem('TOUTIAO_CHANNELS', this.myChannels)
+        }
+      } catch (err) {
+        console.log('失败')
       }
     }
   }
