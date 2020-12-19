@@ -15,3 +15,40 @@ export const getArticleById = articleId => {
 
   })
 }
+
+export const addCollect = target => {
+  return request({
+    method: 'POST',
+    url: '/app/v1_0/article/collections',
+    data: {
+      target
+    }
+  })
+}
+
+export const deleteCollect = target => {
+  return request({
+    method: 'DELETE',
+    url: `/app/v1_0/article/collections/${target}`
+  })
+}
+
+export const addLike = target => {
+  return request({
+    method: 'POST',
+    url: '/app/v1_0/article/likings',
+    data: {
+      target
+    }
+  })
+}
+
+/**
+ * 取消点赞文章
+ */
+export const deleteLike = target => {
+  return request({
+    method: 'DELETE',
+    url: `/app/v1_0/article/likings/${target}`
+  })
+}

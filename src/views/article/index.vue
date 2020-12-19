@@ -1,18 +1,23 @@
 <template>
   <div class="article-container">
     <!-- 导航栏 -->
-    <van-nav-bar class="page-nav-bar" left-arrow title="黑马头条"></van-nav-bar>
+    <van-nav-bar
+      class="page-nav-bar"
+      left-arrow
+      title="黑马头条"
+      @click-left="$router.back()"
+    ></van-nav-bar>
     <!-- /导航栏 -->
 
     <div class="main-wrap">
       <!-- 加载中 -->
-      <div class="loading-wrap" v-if="loading">
+      <div v-if="loading" class="loading-wrap">
         <van-loading color="#3296fa" vertical>加载中</van-loading>
       </div>
       <!-- /加载中 -->
 
       <!-- 加载完成-文章详情 -->
-      <div class="article-detail" v-else-if="article.title">
+      <div v-else-if="article.title" class="article-detail">
         <!-- 文章标题 -->
         <h1 class="article-title">{{ article.title }}</h1>
         <!-- /文章标题 -->
@@ -30,20 +35,47 @@
           <div slot="label" class="publish-date">
             {{ article.pubdate | relativeTime }}
           </div>
+          <!--
+            模板中的 $event 是事件参数
+            当我们传递给子组件的数据既要使用还要修改。
+              传递：props
+                :is-followed="article.is_followed"
+              修改：自定义事件
+                @update-is_followed="article.is_followed = $event"
+            简写方式：在组件上使用 v-model
+              value="article.is_followed"
+              @input="article.is_followed = $event"
+
+            如果需要修改 v-model 的规则名称，可以通过子组件的 model 属性来配置修改
+
+            一个组件上只能使用一次 v-model，
+            如果有多个数据需要实现类似于 v-model 的效果，咋办？
+            可以使用属性的 .sync 修饰符。
+           -->
+          <follow-user
+            class="follow-btn"
+            v-model="article.is_followed"
+            :user-id="article.aut_id"
+          />
+          <!-- <van-button
+            v-if="article.is_followed"
+            class="follow-btn"
+            round
+            size="small"
+            :loading="followLoading"
+            @click="onFollow"
+          >已关注</van-button>
           <van-button
+            v-else
             class="follow-btn"
             type="info"
             color="#3296fa"
             round
             size="small"
             icon="plus"
-            >关注</van-button
-          >
-          <!-- <van-button
-            class="follow-btn"
-            round
-            size="small"
-          >已关注</van-button> -->
+            :loading="followLoading"
+            @click="onFollow"
+          >关注</van-button> -->
         </van-cell>
         <!-- /用户信息 -->
 
@@ -54,11 +86,54 @@
           ref="article-content"
         ></div>
         <van-divider>正文结束</van-divider>
+        <!-- 文章评论列表 -->
+
+        <!-- /文章评论列表 -->
+        <!-- 底部区域 -->
+        <div class="article-bottom">
+          <van-button
+            class="comment-btn"
+            type="default"
+            round
+            size="small"
+            @click="isPostShow = true"
+            >写评论</van-button
+          >
+          <van-icon
+            class="comment-icon"
+            name="comment-o"
+            :info="totalCommentCount"
+          />
+          <!-- 收藏 -->
+          <collect-article
+            class="btn-item"
+            v-model="article.is_collected"
+            :article-id="article.art_id"
+          />
+          <!-- 点赞 -->
+          <like-article
+            class="btn-item"
+            v-model="article.attitude"
+            :article-id="article.art_id"
+          />
+
+          <van-icon name="share" color="#777777"></van-icon>
+        </div>
+        <!-- /底部区域 -->
+
+        <!-- 发布评论 -->
+        <van-popup v-model="isPostShow" position="bottom">
+          <comment-post
+            :target="article.art_id"
+            @post-success="onPostSuccess"
+          />
+        </van-popup>
+        <!-- 发布评论 -->
       </div>
       <!-- /加载完成-文章详情 -->
 
       <!-- 加载失败：404 -->
-      <div class="error-wrap" v-else-if="errStatus === 404">
+      <div v-else-if="errStatus === 404" class="error-wrap">
         <van-icon name="failure" />
         <p class="text">该资源不存在或已删除！</p>
       </div>
@@ -72,28 +147,23 @@
       </div>
       <!-- /加载失败：其它未知错误（例如网络原因或服务端异常） -->
     </div>
-
-    <!-- 底部区域 -->
-    <div class="article-bottom">
-      <van-button class="comment-btn" type="default" round size="small"
-        >写评论</van-button
-      >
-      <!-- 这里在 info 替换成 badge -->
-      <van-icon name="comment-o" badge="123" color="#777" />
-      <van-icon color="#777" name="star-o" />
-      <van-icon color="#777" name="good-job-o" />
-      <van-icon name="share" color="#777777"></van-icon>
-    </div>
-    <!-- /底部区域 -->
   </div>
 </template>
 
 <script>
 import { getArticleById } from '@/api/article'
 import { ImagePreview } from 'vant'
+import FollowUser from '@/components/follow-user'
+import CollectArticle from '@/components/collect-article'
+import LikeArticle from '@/components/like-article'
+
 export default {
   name: 'ArticleIndex',
-  components: {},
+  components: {
+    FollowUser,
+    CollectArticle,
+    LikeArticle
+  },
   props: {
     articleId: {
       type: [Number, String, Object],
@@ -102,9 +172,13 @@ export default {
   },
   data () {
     return {
-      article: [],
-      loading: true,
-      errStatus: 0
+      article: {}, // 文章详情
+      loading: true, // 加载中的 loading 状态
+      errStatus: 0, // 失败的状态码
+      followLoading: false,
+      totalCommentCount: 0,
+      isPostShow: false, // 控制发布评论的显示状态
+      commentList: [] // 评论列表
     }
   },
   computed: {},
@@ -115,28 +189,49 @@ export default {
   mounted () {},
   methods: {
     async loadArticle () {
+      // 展示 loading 加载中
       this.loading = true
       try {
         const { data } = await getArticleById(this.articleId)
-        this.article = data.data
-        setTimeout(() => {
-          this.previewTmage()
-        }, 0)
+
+        // if (Math.random() > 0.5) {
+        //   JSON.parse('dsankljdnskaljndlkjsa')
+        // }
         console.log(data)
+        // 数据驱动视图这件事儿不是立即的
+        this.article = data.data
+
+        // 初始化图片点击预览
+        // console.log(this.$refs['article-content'])
+        setTimeout(() => {
+          this.previewImage()
+        }, 0)
+
+        // 请求成功，关闭 loading
+        // this.loading = false
       } catch (err) {
         if (err.response && err.response.status === 404) {
           this.errStatus = 404
         }
-        // console.log('失败')
+        // this.loading = false
+        // console.log('获取数据失败', err)
       }
+
+      // 无论成功还是失败，都需要关闭 loading
       this.loading = false
     },
-    previewTmage () {
-      const articleConent = this.$refs['article-content']
-      const imgs = articleConent.querySelectorAll('img')
+
+    previewImage () {
+      // 得到所有的 img 节点
+      const articleContent = this.$refs['article-content']
+      const imgs = articleContent.querySelectorAll('img')
+
+      // 获取所有 img 地址
       const images = []
       imgs.forEach((img, index) => {
         images.push(img.src)
+
+        // 给每个 img 注册点击事件，在处理函数中调用预览
         img.onclick = () => {
           ImagePreview({
             // 预览的图片地址数组
@@ -146,7 +241,13 @@ export default {
           })
         }
       })
-      console.log(images)
+    },
+
+    onPostSuccess (data) {
+      // 关闭弹出层
+      this.isPostShow = false
+      // 将发布内容显示到列表顶部
+      this.commentList.unshift(data.new_obj)
     }
   }
 }
@@ -154,8 +255,19 @@ export default {
 
 <style scoped lang="less">
 @import './github-markdown.css';
+/deep/.van-nav-bar .van-icon {
+  color: #fff !important;
+}
 .article-container {
   .main-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #fff;
+  }
+  .article-detail {
     position: fixed;
     left: 0;
     right: 0;
@@ -163,14 +275,13 @@ export default {
     bottom: 88px;
     overflow-y: scroll;
     background-color: #fff;
-  }
-  .article-detail {
     .article-title {
       font-size: 40px;
       padding: 50px 32px;
       margin: 0;
       color: #3a3a3a;
     }
+
     .user-info {
       padding: 0 32px;
       .avatar {
@@ -194,6 +305,7 @@ export default {
         height: 58px;
       }
     }
+
     .article-content {
       padding: 55px 32px;
       /deep/ p {
@@ -201,6 +313,7 @@ export default {
       }
     }
   }
+
   .loading-wrap {
     padding: 200px 32px;
     display: flex;
@@ -208,6 +321,7 @@ export default {
     justify-content: center;
     background-color: #fff;
   }
+
   .error-wrap {
     padding: 200px 32px;
     display: flex;
@@ -233,6 +347,7 @@ export default {
       color: #666666;
     }
   }
+
   .article-bottom {
     position: fixed;
     left: 0;
@@ -253,12 +368,29 @@ export default {
       line-height: 46px;
       color: #a7a7a7;
     }
-    .van-icon {
+    /deep/ .van-icon {
       font-size: 40px;
+    }
+    .comment-icon {
+      top: 2px;
+      color: #777;
       .van-info {
         font-size: 16px;
         background-color: #e22829;
       }
+    }
+    .btn-item {
+      border: none;
+      padding: 0;
+      height: 40px;
+      line-height: 40px;
+      color: #777777;
+    }
+    .collect-btn--collected {
+      color: #ffa500;
+    }
+    .like-btn--liked {
+      color: #e5645f;
     }
   }
 }
