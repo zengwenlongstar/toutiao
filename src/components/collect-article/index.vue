@@ -4,6 +4,7 @@
     :class="{
       collected: value
     }"
+    :loading="loading"
     @click="onCollect"
   />
 </template>

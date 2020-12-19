@@ -87,7 +87,11 @@
         ></div>
         <van-divider>正文结束</van-divider>
         <!-- 文章评论列表 -->
-
+        <comment-list
+          :source="article.art_id"
+          :list="commentList"
+          @onload-success="totalCommentCount = $event.total_count"
+        />
         <!-- /文章评论列表 -->
         <!-- 底部区域 -->
         <div class="article-bottom">
@@ -104,19 +108,16 @@
             name="comment-o"
             :info="totalCommentCount"
           />
-          <!-- 收藏 -->
           <collect-article
             class="btn-item"
             v-model="article.is_collected"
             :article-id="article.art_id"
           />
-          <!-- 点赞 -->
           <like-article
             class="btn-item"
             v-model="article.attitude"
             :article-id="article.art_id"
           />
-
           <van-icon name="share" color="#777777"></van-icon>
         </div>
         <!-- /底部区域 -->
@@ -156,13 +157,17 @@ import { ImagePreview } from 'vant'
 import FollowUser from '@/components/follow-user'
 import CollectArticle from '@/components/collect-article'
 import LikeArticle from '@/components/like-article'
+import CommentList from './components/comment-list'
+import CommentPost from './components/comment-post'
 
 export default {
   name: 'ArticleIndex',
   components: {
     FollowUser,
     CollectArticle,
-    LikeArticle
+    LikeArticle,
+    CommentList,
+    CommentPost
   },
   props: {
     articleId: {
@@ -197,7 +202,7 @@ export default {
         // if (Math.random() > 0.5) {
         //   JSON.parse('dsankljdnskaljndlkjsa')
         // }
-        console.log(data)
+
         // 数据驱动视图这件事儿不是立即的
         this.article = data.data
 
