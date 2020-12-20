@@ -88,6 +88,7 @@
         <van-divider>正文结束</van-divider>
         <!-- 文章评论列表 -->
         <comment-list
+          @reply-click="onReplyClick"
           :source="article.art_id"
           :list="commentList"
           @onload-success="totalCommentCount = $event.total_count"
@@ -148,6 +149,15 @@
       </div>
       <!-- /加载失败：其它未知错误（例如网络原因或服务端异常） -->
     </div>
+
+    <!-- 评论回复 -->
+    <van-popup v-model="isReplyShow" style="height:100%" position="bottom">
+      <comment-reply
+        v-if="isReplyShow"
+        @close="isReplyShow = false"
+        :comment="currentComment"
+      />
+    </van-popup>
   </div>
 </template>
 
@@ -159,6 +169,7 @@ import CollectArticle from '@/components/collect-article'
 import LikeArticle from '@/components/like-article'
 import CommentList from './components/comment-list'
 import CommentPost from './components/comment-post'
+import CommentReply from './components/comment-reply'
 
 export default {
   name: 'ArticleIndex',
@@ -167,7 +178,13 @@ export default {
     CollectArticle,
     LikeArticle,
     CommentList,
-    CommentPost
+    CommentPost,
+    CommentReply
+  },
+  provide: function () {
+    return {
+      articleId: this.articleId
+    }
   },
   props: {
     articleId: {
@@ -183,7 +200,9 @@ export default {
       followLoading: false,
       totalCommentCount: 0,
       isPostShow: false, // 控制发布评论的显示状态
-      commentList: [] // 评论列表
+      commentList: [], // 评论列表
+      isReplyShow: false,
+      currentComment: {}
     }
   },
   computed: {},
@@ -253,6 +272,11 @@ export default {
       this.isPostShow = false
       // 将发布内容显示到列表顶部
       this.commentList.unshift(data.new_obj)
+    },
+    onReplyClick (comment) {
+      console.log(comment)
+      this.currentComment = comment
+      this.isReplyShow = true
     }
   }
 }
@@ -260,8 +284,8 @@ export default {
 
 <style scoped lang="less">
 @import './github-markdown.css';
-/deep/.van-nav-bar .van-icon {
-  color: #fff !important;
+/deep/.van-nav-bar .van-nav-bar__arrow {
+  color: #fff;
 }
 .article-container {
   .main-wrap {

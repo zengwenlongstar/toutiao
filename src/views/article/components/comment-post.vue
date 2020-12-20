@@ -21,6 +21,12 @@ import { addComment } from '@/api/comment'
 export default {
   name: 'CommentPost',
   components: {},
+  inject: {
+    articleId: {
+      type: [Number, String, Object],
+      required: null
+    }
+  },
   props: {
     target: {
       type: [Number, String, Object],
@@ -41,9 +47,9 @@ export default {
       console.log(this.message, this.target)
       try {
         const { data } = await addComment({
-          target: this.target,
+          target: this.target.toString(),
           content: this.message,
-          art_id: null
+          art_id: this.articleId ? this.articleId.toString() : null
         })
         this.message = ''
         this.$emit('post-success', data.data)

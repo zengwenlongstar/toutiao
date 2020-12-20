@@ -15,6 +15,11 @@ const routes = [{
     import('@/views/article'),
   props: true
 }, {
+  path: '/userprofile',
+  name: 'userprofile',
+  component: () =>
+    import('@/views/user-profile')
+}, {
   path: '/search',
   name: 'search',
   component: () =>
